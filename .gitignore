@@ -1,7 +1,27 @@
+# Dependências e build
 node_modules
 dist
 .DS_Store
 .env
+.remotion
 
-# Ignore the output video from Git but not videos you import into src/.
+# Renders / saída de vídeo (não versionar)
 out
+Downloads Remo/
+
+# Mídia de ENTRADA do vídeo sendo editado (cada vídeo é trazido na hora)
+public/*.mp4
+public/*.mov
+public/*.mkv
+public/*.webm
+public/*.avi
+audio16k.wav
+
+# Whisper.cpp: binários + modelo (~1.5GB) e transcrição bruta (regeneráveis)
+whisper.cpp/
+whisper-bin-x64.zip
+transcription-full.json
+
+# Logs temporários
+transcribe-progress.txt
+tmp/
