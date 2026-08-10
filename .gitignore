@@ -25,3 +25,8 @@ transcription-full.json
 # Logs temporários
 transcribe-progress.txt
 tmp/
+
+# B-roll do Pexels e cortes intermediários do silence-cut (regeneráveis)
+# scripts/pexels.cjs recria public/broll/; silence-cut/ é trabalho intermediário de corte
+public/broll/
+silence-cut/

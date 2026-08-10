@@ -7,14 +7,32 @@ import {
 } from "remotion";
 import { PAGES } from "../lib/pages";
 import { MONTSERRAT } from "../lib/fonts";
-import { COLORS, TEXT_SHADOW } from "../lib/theme";
+import { COLORS } from "../lib/theme";
+import { isBehindWindow } from "../lib/behind";
 
-// Legendas animadas estilo TikTok/Reels: 2-3 palavras por vez, a palavra que
-// esta sendo falada ganha destaque amarelo + leve zoom.
+/**
+ * LEGENDA SIMPLES (pedido do dono, 09/08/2026).
+ *
+ * Trocou a legenda do playbook (caixa amarela na palavra ativa) por uma bem
+ * mais limpa, estilo Captions:
+ *   - SÓ texto branco — nenhuma cor de destaque, nenhuma caixa;
+ *   - fonte menor (46 em vez de 60);
+ *   - mais alta na tela (paddingBottom 700 em vez de 560) pra não ser comida
+ *     pela UI do Instagram Reels.
+ *
+ * A palavra que está sendo falada ainda "respira" (um leve pop de escala +
+ * opacidade), que é o que dá o ritmo — mas sem mudar de cor.
+ */
 export const Captions: React.FC = () => {
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
   const ms = (frame / fps) * 1000;
+
+  // Nos momentos de palavra ATRÁS da pessoa, a legenda sai: o texto gigante
+  // já É a palavra falada — repetir embaixo polui e fica amador.
+  if (isBehindWindow(ms)) {
+    return null;
+  }
 
   // pagina ativa: vale ate o inicio da proxima (sem buracos no meio da fala)
   let idx = -1;
@@ -35,29 +53,30 @@ export const Captions: React.FC = () => {
   const enter = spring({
     frame: frame - pageStartFrame,
     fps,
-    config: { damping: 14, mass: 0.6, stiffness: 170 },
+    config: { damping: 16, mass: 0.5, stiffness: 190 },
   });
-  const y = interpolate(enter, [0, 1], [50, 0]);
-  const scale = interpolate(enter, [0, 1], [0.78, 1]);
+  const y = interpolate(enter, [0, 1], [26, 0]);
 
   return (
     <AbsoluteFill
       style={{
         justifyContent: "flex-end",
         alignItems: "center",
-        paddingBottom: 360,
+        // 700: sobe a legenda pra bem acima da UI do Reels (legenda, @, botões)
+        paddingBottom: 700,
       }}
     >
       <div
         style={{
-          transform: `translateY(${y}px) scale(${scale})`,
+          transform: `translateY(${y}px)`,
           display: "flex",
           flexWrap: "wrap",
-          gap: "14px 16px",
+          gap: "10px 14px",
           justifyContent: "center",
           alignItems: "center",
-          maxWidth: 920,
+          maxWidth: 860,
           padding: "0 70px",
+          opacity: Math.min(1, enter * 2),
         }}
       >
         {page.words.map((w, i) => {
@@ -66,27 +85,27 @@ export const Captions: React.FC = () => {
           const pop = spring({
             frame: frame - wf,
             fps,
-            config: { damping: 12, stiffness: 200, mass: 0.5 },
+            config: { damping: 13, stiffness: 220, mass: 0.4 },
           });
-          const aScale = active ? 1 + 0.12 * Math.min(1, pop) : 1;
+          const aScale = active ? 1 + 0.08 * Math.min(1, pop) : 1;
           return (
             <span
               key={i}
               style={{
                 fontFamily: MONTSERRAT,
                 fontWeight: 800,
-                fontSize: 78,
-                lineHeight: 1,
+                fontSize: 46,
+                lineHeight: 1.1,
                 textTransform: "uppercase",
-                letterSpacing: -1,
-                color: active ? COLORS.accentInk : COLORS.white,
-                background: active ? COLORS.accent : "transparent",
-                padding: active ? "8px 18px" : "8px 4px",
-                borderRadius: 16,
+                letterSpacing: -0.5,
+                // só branco: a palavra falada muda de PESO visual, não de cor
+                color: COLORS.white,
+                opacity: active ? 1 : 0.72,
                 transform: `scale(${aScale})`,
                 display: "inline-block",
-                boxShadow: active ? "0 10px 24px rgba(0,0,0,0.35)" : "none",
-                textShadow: active ? "none" : TEXT_SHADOW,
+                // contorno discreto pra ler sobre qualquer fundo
+                textShadow:
+                  "0 2px 0 rgba(0,0,0,0.55), 0 0 16px rgba(0,0,0,0.65)",
               }}
             >
               {w.text}

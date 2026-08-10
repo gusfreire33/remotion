@@ -198,7 +198,34 @@ poluição visual. Validar com stills (Etapa 11).
 "screen" + blur, nos últimos ~18 frames do beat) e o wrapper **`ExitFade`** no master de
 `Overlays.tsx` (fade + leve recuo dos elementos nos últimos ~16 frames).
 
-⚠️ **Correção crítica do dono (NÃO esquecer):** o film burn **só** entra no FIM de cada beat. E
+⛔ **REVISÃO 27/07/2026 — SEM FILM BURN (continua valendo).** O dono tirou a queima de película
+do vídeo inteiro (não é só "no fim" nem "só na abertura": é **nenhuma**). O `<FilmBurn />`
+continua em `src/components/` caso volte a ser pedido, mas **não** é montado em `Overlays.tsx`.
+
+✅ **REVISÃO 09/08/2026 — TRANSIÇÕES NOVAS (isto NÃO é film burn).** O dono pediu efeito de
+transição nos cortes. Entrou `src/components/Transitions.tsx`, com três gramáticas curtas
+(5–8 frames), no ritmo do Captions:
+
+| tipo | onde | o que faz |
+|------|------|-----------|
+| `whip` | entrada e saída de B-roll full-bleed | borrão forte + risco de luz varrendo |
+| `punch` | entrada de overlay sobre o rosto | borrão curto + estouro branco |
+| `glitch` | entrada da palavra atrás da pessoa | split RGB em faixas finas |
+
+⚠️ **Dois detalhes que quebram isso se forem mexidos:**
+1. `<Transitions />` tem que ser a **última** camada de `MeuVideo.tsx`. Ela usa
+   `backdrop-filter`, que só filtra o que está **atrás** dela — em qualquer outra posição não
+   pega o quadro inteiro e vira um brilho colado na frente.
+2. As faixas do `glitch` têm posições **fixas**. Nada de `Math.random()` em componente
+   Remotion: cada frame do render sortearia um desenho diferente e a transição vira chuvisco.
+
+O corte começa **2 frames antes** do evento — o borrão precisa já estar subindo quando a
+imagem troca, senão a transição chega atrasada.
+
+📌 *Histórico (regras anteriores, revogadas):* "film burn só no FIM do beat" → "film burn só na
+abertura do vídeo" → **sem film burn**.
+
+⚠️ **Regra do `ExitFade` (essa continua valendo):** o film burn, quando existir, **só** entra no FIM do beat. E
 os elementos da animação **DEVEM sumir junto com a queima** (via `ExitFade`) — não pode sobrar
 elemento na tela depois que a transição passa. Esse ajuste é obrigatório.
 
@@ -223,17 +250,34 @@ mais de um beat.
   chips/balões/CTA; **impact** em carimbos; **ding** no clímax e no "link na bio".
 - Volume: `MASTER = 0.40` × ganho por som (voz do vídeo = 1.0).
 
-⚠️ **Correções validadas do dono (NÃO esquecer):**
-- **SEM som na transição film burn** (o usuário achou ruim — não usar o `burn.wav` nos beats).
-- Os demais efeitos ficaram com **+25%** de volume (foi assim que chegamos no `MASTER = 0.40`).
+✅ **REVISÃO 09/08/2026 — VALE AGORA: COM SFX.** O dono pediu efeitos sonoros de volta ("pra
+deixar o vídeo vivo"). Isto **revoga** a decisão de 27/07/2026 que tinha tirado todo o SFX.
+
+O `<SoundFX />` está montado em `MeuVideo.tsx` e a lista de cues é **derivada de
+`src/lib/cuts.ts`** — a mesma lista que desenha as transições. Isso é de propósito: som e
+imagem saem da mesma fonte, então mexer no timing de um beat move os dois juntos.
+
+Mapa em uso:
+- **swoosh** na entrada e na saída de cada B-roll full-bleed (corte forte);
+- **whoosh** na entrada de overlay (troca menor);
+- **glitch + boom** quando a palavra entra atrás da pessoa;
+- **tick/click/type** nos elementos que aparecem um a um (avatares, toggles, checklist, digitação);
+- **impact** nos carimbos, **ding** nos beats de alívio/sucesso, **riser** antes do alerta.
+
+Volume: `MASTER = 0.36` × ganho por som. Esse número foi **medido**, não chutado: com 0.42 o
+pico da mistura passava o pico da voz num render de teste. A voz continua sendo o elemento
+mais alto do vídeo.
+
+📌 *Histórico (revogado):* "whoosh na entrada, sem som no film burn" → "só o `burn` no film
+burn" → "sem SFX" → **com SFX derivados de `cuts.ts`**.
 
 ✅ **Checklist**
-- [ ] Nenhum SFX no film burn.
-- [ ] Todos os SFX abaixo de 1.0 (claramente mais baixos que a voz).
-- [ ] Sons sincronizados com a aparição dos elementos.
+- [ ] Todo corte tem som, e o som cai no MESMO frame da transição.
+- [ ] Pico da mistura **não** passa o pico da voz; zero clipping.
+- [ ] A voz do vídeo original está presente na saída (`ffprobe` mostra faixa de áudio).
 
-🔎 **Qualidade:** dar play no Studio (toca áudio ao vivo). Os efeitos reforçam sem cobrir/competir
-com a voz. Renderizar um trecho curto e confirmar que existe faixa de áudio (`ffprobe`).
+🔎 **Qualidade:** render curto de teste (`--frames=0-260 --scale=0.5`), extrair o WAV e comparar
+pico da mistura × pico da voz original. Depois dar play no Studio e ouvir.
 
 ---
 
@@ -287,8 +331,9 @@ com a voz. Renderizar um trecho curto e confirmar que existe faixa de áudio (`f
 | Motion blur | `CameraMotionBlur` shutterAngle 150, samples 6 |
 | Película | radial `rgba(0,0,0,0.32→0.64)`, fade in 10f / out 12f, só durante beats |
 | Zoom | Ken Burns 1.03→1.09 + push-in +0.055 nos beats + socos +0.05 (16f) |
-| Film burn | só no FIM do beat (~18f) + `ExitFade` (16f) pra nada sobrar |
-| SFX | `MASTER = 0.40`, sempre < voz; **sem som no film burn** |
+| Film burn | **removido** — segue fora |
+| Transições | `whip` / `punch` / `glitch` (5–8f), de `lib/cuts.ts`, camada do topo |
+| SFX | **religados** (09/08/2026), derivados de `lib/cuts.ts`, `MASTER = 0.36` |
 
 ---
 

@@ -159,10 +159,108 @@ const makeImpact = (dur) => {
   return out;
 };
 
+/* ================= sons novos — edição estilo Captions (09/08/2026) ======= */
+
+/* ----- swoosh: whip curto e brilhante, pro corte de B-roll ----- */
+const makeSwoosh = (dur) => {
+  const n = Math.floor(dur * SR);
+  const noise = new Float32Array(n);
+  for (let i = 0; i < n; i++) noise[i] = rnd();
+  // filtro fecha->abre->fecha: dá a sensação de "passar voando"
+  const filt = movingAvg(noise, (t) => 70 - Math.sin(t * Math.PI) * 62);
+  const out = new Float32Array(n);
+  for (let i = 0; i < n; i++) {
+    out[i] = filt[i] * ar(i, n, 0.03, 0.1) * 1.6;
+  }
+  return out;
+};
+
+/* ----- boom: sub grave pra palavra que entra atrás da pessoa ----- */
+const makeBoom = (dur) => {
+  const n = Math.floor(dur * SR);
+  const out = new Float32Array(n);
+  for (let i = 0; i < n; i++) {
+    const t = i / n;
+    // pitch caindo de 110Hz pra 38Hz = "drop" de impacto
+    const f = 110 - t * 72;
+    const decay = Math.exp(-t * 4.5);
+    const body = Math.sin(2 * Math.PI * f * (i / SR));
+    const sub = Math.sin(2 * Math.PI * (f / 2) * (i / SR)) * 0.5;
+    const knock = rnd() * Math.exp(-t * 60) * 0.35;
+    out[i] = (body + sub + knock) * decay;
+  }
+  return out;
+};
+
+/* ----- riser: tensão curta subindo antes de uma revelação ----- */
+const makeRiser = (dur) => {
+  const n = Math.floor(dur * SR);
+  const noise = new Float32Array(n);
+  for (let i = 0; i < n; i++) noise[i] = rnd();
+  const filt = movingAvg(noise, (t) => 90 - t * 84);
+  const out = new Float32Array(n);
+  for (let i = 0; i < n; i++) {
+    const t = i / n;
+    // ruído abrindo + tom subindo junto
+    const tone = Math.sin(2 * Math.PI * (220 + t * t * 900) * (i / SR)) * 0.35;
+    out[i] = (filt[i] * 1.2 + tone) * Math.pow(t, 1.6) * ar(i, n, 0.01, 0.06);
+  }
+  return out;
+};
+
+/* ----- click: UI seco (toggle, chip) ----- */
+const makeClick = (dur) => {
+  const n = Math.floor(dur * SR);
+  const out = new Float32Array(n);
+  for (let i = 0; i < n; i++) {
+    const t = i / n;
+    const decay = Math.exp(-t * 90);
+    out[i] = (rnd() * 0.7 + Math.sin(2 * Math.PI * 2200 * (i / SR)) * 0.4) * decay;
+  }
+  return out;
+};
+
+/* ----- type: tecla do teclado (CTA digitando) ----- */
+const makeType = (dur) => {
+  const n = Math.floor(dur * SR);
+  const out = new Float32Array(n);
+  for (let i = 0; i < n; i++) {
+    const t = i / n;
+    const decay = Math.exp(-t * 120);
+    out[i] = (rnd() * 0.8 + Math.sin(2 * Math.PI * 900 * (i / SR)) * 0.3) * decay;
+  }
+  return out;
+};
+
+/* ----- glitch: estouro digital curto pro corte com RGB split ----- */
+const makeGlitch = (dur) => {
+  const n = Math.floor(dur * SR);
+  const out = new Float32Array(n);
+  let hold = 0;
+  let val = 0;
+  for (let i = 0; i < n; i++) {
+    const t = i / n;
+    // sample-and-hold: trava o valor por N amostras = som "quebrado"/digital
+    if (hold <= 0) {
+      val = rnd();
+      hold = 20 + Math.floor(Math.random() * 90);
+    }
+    hold--;
+    out[i] = val * Math.exp(-t * 9) * (Math.random() < 0.85 ? 1 : 0);
+  }
+  return out;
+};
+
 writeWav("whoosh", makeWhoosh(0.36, true));
 writeWav("burn", makeBurn(0.7));
 writeWav("pop", makePop(0.16));
 writeWav("tick", makeTick(0.09));
 writeWav("ding", makeDing(0.6));
 writeWav("impact", makeImpact(0.4));
+writeWav("swoosh", makeSwoosh(0.24));
+writeWav("boom", makeBoom(0.6));
+writeWav("riser", makeRiser(0.5));
+writeWav("click", makeClick(0.05));
+writeWav("type", makeType(0.04));
+writeWav("glitch", makeGlitch(0.2));
 console.log("DONE");
