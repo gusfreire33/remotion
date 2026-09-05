@@ -13,7 +13,6 @@ import { FilmLook } from "./components/FilmLook";
 import { Transitions } from "./components/Transitions";
 import { Callouts } from "./overlays/Callouts";
 import { SoundFX } from "./audio/SoundFX";
-import { Music } from "./audio/Music";
 import { CALLOUTS, PUNCHES_S } from "./lib/callouts";
 import { FPS } from "./lib/constants";
 
@@ -111,7 +110,8 @@ export const MeuVideo: React.FC = () => {
       <FilmLook grain={0.07} vignette={0.5} />
       <Callouts />
       <Transitions />
-      <Music />
+      {/* Trilha de fundo REMOVIDA a pedido do dono (05/09/2026): a trilha
+          sintetizada soou como ruído. Pra voltar: <Music /> (audio/Music.tsx). */}
       <SoundFX />
     </AbsoluteFill>
   );
