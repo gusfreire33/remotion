@@ -36,24 +36,63 @@ const NON_SPEECH = /\[.*?\]|\(.*?\)|[\[\]]|sil[êe]ncio|BLANK_AUDIO|m[uú]sica|m
 // Correcoes de termos que o Whisper erra (checadas re-transcrevendo o trecho
 // isolado). A chave e a palavra crua (sem pontuacao, minuscula); a pontuacao
 // original e preservada.
+// ⚠️ Esta tabela e ESPECIFICA DE CADA VIDEO. As correcoes do video anterior
+// (vazamento; antes disso ceratocone/cornea) foram removidas ao entrar o
+// "Video 20": aplicar fix de outro video troca palavra certa por errada
+// (ex.: "popular" -> "irregular").
 const FIXES = {
-  seratocone: "ceratocone",
-  seratoconia: "ceratocone",
-  ceratoconia: "ceratocone",
-  cornea: "córnea",
-  popular: "irregular", // 21,5s "...a córnea começa a ficar irregular"
-  calamidade: "deformidade", // 137s "...mostram a deformidade na córnea"
+  // "Vídeo 29" — CTA. Whisper devolve `"vasamento"` (aspas grudadas).
+  // (vazio — "VSLL Wonne V4": conferir a transcrição antes de adicionar)
 };
 
+// Palavras que o Whisper QUEBRA em duas (uma so palavra falada vira dois
+// tokens separados por espaco, entao a regra de "comeca com espaco = palavra
+// nova" nao consegue juntar). A chave e o par cru em minusculas.
+// ⚠️ Tambem e ESPECIFICA DE CADA VIDEO.
+const MERGES = [
+  // "Vídeo 29" — a transcrição crua já junta as palavras certas.
+];
+
+const norm = (t) => t.replace(/[^\wÀ-ÿ-]/gu, "").toLowerCase();
+
+const applyMerges = (list) => {
+  const out = [];
+  for (let i = 0; i < list.length; i++) {
+    const cur = list[i];
+    const nxt = list[i + 1];
+    const m =
+      nxt &&
+      MERGES.find((x) => x.a === norm(cur.text) && x.b === norm(nxt.text));
+    if (m) {
+      // preserva a pontuacao que veio grudada no SEGUNDO token ("ziva," -> ",")
+      const tail = nxt.text.match(/[^\wÀ-ÿ-]*$/u)?.[0] ?? "";
+      out.push({
+        text: m.to + tail,
+        startMs: cur.startMs,
+        endMs: nxt.endMs,
+        confSum: cur.confSum + nxt.confSum,
+        confN: cur.confN + nxt.confN,
+      });
+      i += 1;
+    } else {
+      out.push(cur);
+    }
+  }
+  return out;
+};
+
+// O token pode vir com pontuacao NA FRENTE (o Whisper devolve a palavra do CTA
+// como `"vasamento"`, com aspas). Por isso o prefixo e capturado a parte: sem
+// isso o regex nao casava e o fix passava batido.
 const applyFix = (text) => {
-  const m = text.match(/^([\wÀ-ÿ-]+)(.*)$/u);
+  const m = text.match(/^([^\wÀ-ÿ]*)([\wÀ-ÿ-]+)(.*)$/u);
   if (!m) return text;
-  const fix = FIXES[m[1].toLowerCase()];
-  return fix ? fix + m[2] : text;
+  const fix = FIXES[m[2].toLowerCase()];
+  return fix ? m[1] + fix + m[3] : text;
 };
 
 // Limpa: remove palavras vazias, marcadores de nao-fala e normaliza confianca
-const clean = words
+const clean = applyMerges(words)
   .map((w) => ({
     text: applyFix(w.text),
     startMs: w.startMs,

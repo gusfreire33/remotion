@@ -18,41 +18,41 @@ const { selectComposition, renderStill } = require("@remotion/renderer");
   console.log("Selecionando composicao...");
   const composition = await selectComposition({ serveUrl, id: "MeuVideo", port: PORT });
 
-  // "Vídeo 18 {RE EDITADO.mp4" — CHAT GPT ADS, 20 beats @30fps (1917 frames).
-  // Stills = as 10 palavras ATRÁS da pessoa + pico dos overlays + B-roll +
-  // um FIM de beat (checar o ExitFade) + um frame limpo.
+  // "VSLL Wonne V4.mp4" — VSL horizontal estilo "Bilhon-OS", 69 eventos
+  // @30fps (8104 frames). Stills = palavras ATRÁS + cartões + chips/steps +
+  // fins de evento (tela limpa) + cortes.
   const frames = [
-    30, //   [ATRAS] 1,0s "CHATGPT ADS"
-    90, //   [hookTitulo] 3,0s ticker + título
-    128, //  [FIM hookTitulo] 4,27s saída — tela tem que estar limpando
-    165, //  [B-ROLL aiRede] 5,5s animação de IA
-    240, //  [ATRAS] 8,0s "GOOGLE" (contorno)
-    294, //  [B-ROLL googleLado] 9,8s busca no laptop
-    354, //  [maioria] 11,8s avatares + barra
-    402, //  [ATRAS] 13,4s "PESQUISAR"
-    468, //  [B-ROLL pesquisaGpt] 15,6s digitando
-    549, //  [versus] 18,3s ChatGPT x Google
-    606, //  [ATRAS] 20,2s "INTENÇÃO" (amarelo)
-    660, //  [B-ROLL intencaoAlvo] 22,0s flecha no alvo
-    729, //  [CARD segmentacao] 24,3s dashboard
-    792, //  [ATRAS] 26,4s "SEGMENTAÇÃO"
-    855, //  [filtros] 28,5s chips com toggle
-    924, //  [B-ROLL filtroDados] 30,8s dados filtrando
-    1029, // [similar] 34,3s equalizer de eficiência
-    1092, // [ATRAS] 36,4s "EFICIENTE" (verde)
-    1143, // [B-ROLL brasil] 38,1s selo sobre São Paulo
-    1203, // [contas] 40,1s cadeado + contador
-    1248, // [ATRAS] 41,6s "POUCAS CONTAS" (contorno)
-    1332, // [ATRAS] 44,4s "SORTEADAS"
-    1389, // [vaAtras] 46,3s checklist
-    1467, // [problema] 48,9s faixa de alerta
-    1530, // [ATRAS] 51,0s "SAÚDE" (vermelho)
-    1575, // [naoAnuncia] 52,5s carimbo
-    1644, // [querAnunciar] 54,8s campo de busca
-    1710, // [B-ROLL perdido] 57,0s travado no PC
-    1761, // [tranquilo] 58,7s chip verde
-    1806, // [ATRAS] 60,2s "VAZAMENTO"
-    1875, // [cta] 62,5s caixa de comentário + card do celular
+    45, //    1,50s [over top] "uma pergunta DIRETA"
+    62, //    2,07s [FIM over] — nada pode sobrar
+    108, //   3,60s [ATRAS] "INDICAÇÃO"
+    177, //   5,90s [over chest] "ENTRARIAM AMANHÃ?"
+    237, //   7,90s [CARD sem moldura] "SÉRIO."
+    297, //   9,90s [over tr] "DESCONFORTÁVEL"
+    378, //  12,60s [over tl] "5 MINUTOS"
+    486, //  16,20s [ATRAS] "FATURAMENTO"
+    594, //  19,80s [CARD + dinheiro] "MÁQUINA DE CLIENTES"
+    636, //  21,20s [CARD linha 3] "chegando toda semana"
+    659, //  21,97s [CORTE whip] saída do cartão
+    738, //  24,60s [over tl] "ONE DIGITAL"
+    885, //  29,50s [ATRAS] "DEMANDA PREVISÍVEL"
+    1335, // 44,50s [CHIPS + tail] agência/social/editor/programador
+    1455, // 48,50s [ATRAS] "GERENTE DE FREELANCER"
+    1815, // 60,50s [CARD] "O FATURAMENTO PARA JUNTO"
+    1914, // 63,80s [over chest] "ISSO É APOSTA"
+    2280, // 76,00s [CARD] "7 FRENTES DE CRESCIMENTO"
+    2460, // 82,00s [ATRAS] "SISTEMA RADAR"
+    2730, // 91,00s [STEPS R + over tl]
+    3840, // 128,0s [STEPS R·A·D·A·R completo + over tl]
+    4305, // 143,5s [CARD] leads/custa/cliente
+    4740, // 158,0s [CHIPS] 7 frentes (2 fileiras)
+    5430, // 181,0s [CARD OneMax + chips]
+    5700, // 190,0s [ATRAS] "CONTRATA RESULTADO"
+    6420, // 214,0s [STEPS 1-2 + CHIPS topo]
+    7134, // 237,8s [CARD] "A GENTE PEDE AUDITORIA"
+    7410, // 247,0s [ATRAS] "DIAGNÓSTICO GRATUITO"
+    7920, // 264,0s [CHIPS riscados] sem indicação/aposta/freelancer
+    7977, // 265,9s [ATRAS] "CLIQUE AGORA"
+    8070, // 269,0s [CARD final] "MAS A INÉRCIA TEM CUSTO."
   ];
   // `node scripts/render-stills.cjs 134 216 331` renderiza só esses frames —
   // útil pra conferir um ponto específico sem re-render da lista inteira.

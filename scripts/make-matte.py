@@ -13,7 +13,7 @@ transformação de zoom nas duas camadas para o encaixe ficar perfeito.
 Uso (a partir de editor/):
     python .\\scripts\\make-matte.py
 
-Entrada : public/video2_1080.mp4
+Entrada : public/video29_1080.mp4
 Saída   : public/matte-pessoa.webm
 """
 
@@ -32,7 +32,7 @@ from mediapipe.tasks.python.vision import (
 )
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-SRC = os.path.join(ROOT, "public", "video2_1080.mp4")
+SRC = os.path.join(ROOT, "public", sys.argv[1] if len(sys.argv) > 1 else "video30_1080.mp4")
 OUT = os.path.join(ROOT, "public", "matte-pessoa.webm")
 MODEL = os.path.join(ROOT, "scripts", "models", "selfie_segmenter.tflite")
 FFMPEG = os.path.join(

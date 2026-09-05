@@ -8,8 +8,7 @@ import { WIDTH, HEIGHT, FPS, DURATION_IN_FRAMES } from "./lib/constants";
 export const RemotionRoot: React.FC = () => {
   return (
     <>
-      {/* "Vídeo 18 {RE EDITADO.mp4": fonte 2160x3840@30fps, 63,88s. Design
-          1080x1920 @30fps; 4K real sai no render com --scale=2. */}
+      {/* "VSLL Wonne V4.mp4" — VSL horizontal estilo "Bilhon-OS". 1920x1080@30fps, 270,13s. */}
       <Composition
         id="MeuVideo"
         component={MeuVideo}

@@ -14,7 +14,7 @@
 ## 🆚 O que muda do Framework 1
 
 O Playbook 1 (`PLAYBOOK.md`) continua válido como base técnica. O Framework 2 mantém quase
-tudo dele e troca **quatro** coisas — são elas que fazem a "cara" desta edição:
+tudo dele e troca **cinco** coisas — são elas que fazem a "cara" desta edição:
 
 | | Framework 1 | **Framework 2** |
 |---|---|---|
@@ -22,6 +22,7 @@ tudo dele e troca **quatro** coisas — são elas que fazem a "cara" desta ediç
 | Palavra de impacto | dentro do overlay | **atrás da pessoa** (recorte com canal alfa) |
 | Transição | corte + `ExitFade`, e só | corte + **`whip` / `punch` / `glitch`** |
 | Som | nenhum | **SFX derivados do mapa de cortes** |
+| Fundo | nítido | **desfocado (bokeh de lente), com a pessoa nítida por cima** |
 
 Continua igual: vertical 1080×1920 (4K no render), fontes Montserrat + Anton, película só nos
 beats, `CameraMotionBlur` 150/6, `ExitFade`, zoom dinâmico, **sem film burn**, e a regra de
@@ -50,16 +51,16 @@ E do modelo de segmentação em `scripts/models/selfie_segmenter.tflite` (baixar
 Igual ao Playbook 1 (Etapas 1 a 4), com **uma adição obrigatória**: gerar o **proxy 1080p**.
 
 ```powershell
-# 1. copiar a fonte
-Copy-Item -LiteralPath "<origem>.mp4" -Destination ".\public\<nome>_src.mp4" -Force
-npx remotion ffprobe ".\public\<nome>_src.mp4"     # anotar WxH, fps, duração
+# 1. copiar a fonte (em sources/, NÃO em public/: o bundle copia public/ inteiro pro TEMP)
+Copy-Item -LiteralPath "<origem>.mp4" -Destination ".\sources\<nome>_src.mp4" -Force
+npx remotion ffprobe ".\sources\<nome>_src.mp4"     # anotar WxH, fps, duração
 
 # 2. proxy 1080p — é dele que sai o preview E o recorte da pessoa
-npx remotion ffmpeg -i ".\public\<nome>_src.mp4" -vf scale=1080:1920 `
+npx remotion ffmpeg -i ".\sources\<nome>_src.mp4" -vf scale=1080:1920 `
   -c:v libx264 -crf 20 -preset veryfast -c:a aac -b:a 192k ".\public\<nome>_1080.mp4" -y
 
 # 3. áudio e transcrição
-npx remotion ffmpeg -i ".\public\<nome>_src.mp4" -ar 16000 -ac 1 -c:a pcm_s16le ".\audio16k.wav" -y
+npx remotion ffmpeg -i ".\sources\<nome>_src.mp4" -ar 16000 -ac 1 -c:a pcm_s16le ".\audio16k.wav" -y
 node ".\scripts\transcribe.cjs"
 node ".\scripts\build-words.cjs"
 ```
@@ -186,15 +187,16 @@ assinatura; mais que isso vira ruído e a legenda some demais.
 e ele ficou todo **acima** da cabeça — flutuando no vazio, sem cruzar a pessoa. O efeito
 simplesmente não aparecia.
 
-**O procedimento certo:** renderize um frame do recorte e **meça onde a pessoa está**.
+**O procedimento certo:** meça a silhueta do recorte no meio de **cada** janela.
 
 ```powershell
-$ff='.\node_modules\@remotion\compositor-win32-x64-msvc\ffmpeg.exe'
-& $ff -y -vcodec libvpx-vp9 -ss 20 -i ".\public\matte-pessoa.webm" -frames:v 1 -pix_fmt rgba ".\_m.png"
+python ".\scripts\measure-matte.py" 1.7 10.3 19.6 ...   # topo da cabeça, ombros, centro x
 ```
 
-Abra o PNG e anote, em coordenadas de design 1080×1920: **onde começa a cabeça** e **onde está
-o queixo**. Depois:
+⚠️ O que sai daí está no espaço do **matte**. O vídeo entra com `scale(S)` em torno do centro
+(y=960), então converta antes de usar: `y_tela = 960 + (y_matte − 960) × S`, com S = Ken Burns
++ soco de zoom (~1,09–1,14 nas palavras-atrás). Pular essa conversão põe o texto uns 30px fora
+do lugar. Com o topo da cabeça e os ombros **na tela**:
 
 > **A BASE do texto tem que cair entre o topo da cabeça e o queixo.**
 > Ou seja: `top + altura_do_texto` ≈ topo_da_cabeça + 20% da altura da cabeça.
@@ -226,9 +228,9 @@ python ".\scripts\make-matte.py"    # lê public/<nome>_1080.mp4
 **Como a mágica funciona** — a pilha de camadas em `MeuVideo.tsx`, nesta ordem:
 
 ```
-1. vídeo base           (scale = S)
+1. vídeo base           (scale = S)   ← COM blur (Etapa 7.1)
 2. BehindText           ← a palavra
-3. recorte da pessoa    (scale = S)   ← cobre a palavra
+3. recorte da pessoa    (scale = S)   ← cobre a palavra E devolve a pessoa nítida
 4. gradiente / overlays / legendas
 5. Transitions          ← sempre por último
 6. SoundFX
@@ -248,8 +250,51 @@ python ".\scripts\make-matte.py"    # lê public/<nome>_1080.mp4
 
 *(O `scripts/make-matte.py` já faz o item 4. Os outros três são do lado do React.)*
 
+### 7.1 · Fundo desfocado (bokeh) — PADRÃO desde 20/08/2026
+
+🎯 Pedido do dono no "Vídeo 25": *"como se fosse gravação de câmera profissional"*. **Vale pra
+todo vídeo novo**, não é enfeite de um vídeo só.
+
+O recorte já resolve isso de graça — é a MESMA pilha, com duas mudanças:
+
+1. a camada 1 (vídeo base) ganha `filter: blur(Npx)`;
+2. o recorte (camada 3) passa a ficar **aceso do primeiro ao último frame**, e não só nas
+   janelas das palavras-atrás.
+
+As palavras-atrás continuam nítidas sem nenhum trabalho extra: elas estão na camada 2, ou
+seja, **acima** do vídeo borrado.
+
+```tsx
+const BG_BLUR_MAX_PX = 20;   // 100% = lente bem aberta
+const BG_BLUR_PCT = 0.2;     // dosagem aprovada pelo dono
+const BG_BLUR_PX = BG_BLUR_MAX_PX * BG_BLUR_PCT;
+```
+
+**Dosagem:** deixe sempre como uma porcentagem de um teto, num lugar só — o dono ajusta por
+tentativa e é uma linha. No vídeo 25 ele viu 40% (*"MUITO bom, mas tá bem intenso"*) e fechou
+em **20%**. Comece oferecendo 20%.
+
+⛔ **Três coisas que quebram isto:**
+
+1. **O `scale` das camadas 1 e 3 tem que continuar IDÊNTICO** (é a armadilha nº1 da Etapa 7).
+   A tentação é dar um zoom extra na camada borrada pra esconder a borda — não dê, ela
+   desencaixa do recorte.
+2. **A borda do quadro.** O `filter: blur()` desvanece o conteúdo pra transparente ao longo do
+   raio, nas bordas do elemento. Quem salva é a sobra do Ken Burns: com S ≥ 1,03 sobram 16px
+   na horizontal. **Enquanto o raio for menor que 16px (ou seja, até ~70% do teto) não tem
+   problema.** Acima disso, aí sim é preciso um scale extra só na camada borrada — e aceitar
+   o halo.
+3. **O matte fica exposto o vídeo inteiro.** Antes ele aparecia ~1,4s por vez e a franja
+   passava batido; agora está na tela 100% do tempo. **Revise stills com as mãos abertas e
+   dedos separados** — é onde o MediaPipe corta. Se desfiar, regere o matte com mais
+   suavização temporal antes de baixar o blur.
+
+*(Bônus que não custa nada: como a cópia borrada da pessoa continua embaixo do recorte, sobra
+um halo suave no contorno dos ombros — que é o que uma lente de verdade faz.)*
+
 ✅ **Checklist:** o webm existe · um frame extraído tem canal alfa com a pessoa sólida e o
-fundo em 0 · `ffprobe` mostra a duração igual à do vídeo.
+fundo em 0 · `ffprobe` mostra a duração igual à do vídeo · **o recorte está aceso em TODOS os
+frames e o blur não sangra na borda do quadro**.
 
 ---
 
@@ -458,14 +503,31 @@ descobri porque medi. O procedimento:
 # render curto
 $env:TMP='D:\remotion-tmp'; $env:TEMP='D:\remotion-tmp'
 npx remotion render MeuVideo ".\out\_teste.mp4" --frames=0-260 --scale=0.5
-# extrair o WAV da mistura e o WAV da voz original, e comparar os picos
+python ".\scripts\measure-audio.py" "out\_teste.mp4" 0 8.7   # compara os picos
 ```
 
 > **Critério de aprovação: pico da mistura ≈ pico da voz + no máximo ~10%, e zero clipping.**
 > No vídeo validado: mistura 0,381 × voz 0,349, com `MASTER = 0.36`.
 
+⚠️ **O `MASTER` NÃO se herda entre vídeos.** Ele depende de quão quente veio a voz do source,
+que muda a cada gravação — no "Vídeo 19" o pico da voz era 0,360 e no "Vídeo 20" era 0,800, e
+o mesmo 0.46 que num ficou sob a voz no outro estourou +16%. Meça **sempre**, e meça em mais
+de um trecho: o começo e o beat com mais elementos escalonados.
+
 *(o `volumedetect` do ffmpeg do Remotion não existe — ele é compilado com `--disable-filters`.
 Extraia o WAV e meça com numpy.)*
+
+⛔ **Duas formas de medir errado — as duas já reprovaram um master que estava certo:**
+
+1. **Downmix mono (`-ac 1`) inventa pico.** O downmix é 0,5·(L+R); o render deixa os canais
+   mais correlacionados que o source e o resultado é um pico que não existe em canal nenhum.
+   Meça **por canal** — é o que vai pro Reels.
+2. **Não corte 44 bytes fixos de cabeçalho do WAV.** O WAV que este ffmpeg escreve traz um
+   chunk a mais; o corte fixo desalinha as amostras por um número ímpar de bytes e o que você
+   mede é ruído. Ache os chunks `fmt `/`data` (é o que o `measure-audio.py` faz). Sintoma:
+   picos altos, idênticos em trechos diferentes, que não mudam quando você mexe no `MASTER`.
+
+> Cheiro de medição quebrada: **mudou o `MASTER` e o pico não se moveu.**
 
 ---
 
@@ -508,10 +570,19 @@ e o recorte fora de sincronia) — nenhum dos dois era óbvio lendo o código.
 ⛔ **Só depois do "ok" do dono.** Nunca antes.
 
 ```powershell
-$env:TMP='D:\remotion-tmp'; $env:TEMP='D:\remotion-tmp'   # C: enche com o cache do render
+# 1. FECHE O STUDIO. O render sobe um servidor próprio e, se cair na 3000 (onde
+#    o Studio está), carrega a página errada e morre com "Rendering was
+#    cancelled" — sem dizer o motivo. Por isso o --port dedicado abaixo.
+# 2. Confira o C: livre: com menos de ~10 GB o Chrome do render falha. O cache
+#    velho fica em %LOCALAPPDATA%\Temp\remotion-v*-assets* e pode ser apagado.
+$env:TMP='D:\remotion-tmp'; $env:TEMP='D:\remotion-tmp'; $env:TMPDIR='D:\remotion-tmp'
 $env:REMOTION_USE_4K='1'
-npx remotion render MeuVideo "out/MeuVideo.mp4" --scale=2
+npx remotion render MeuVideo "out/MeuVideo.mp4" --scale=2 `
+  --port 3406 --concurrency=4 --timeout=120000
 ```
+
+⚠️ **Não filtre a saída do render** (`| Select-Object -Last N`) na primeira tentativa: o erro
+de verdade sai no MEIO do log, e o fim só mostra o stack do "cancelled".
 
 ✅ Render exit 0 · `ffprobe` mostra dimensões/fps corretos **e faixa de áudio** · assistir do
 início ao fim.
@@ -528,9 +599,16 @@ início ao fim.
 | `Unknown input format: rawvideo` | ffmpeg do Remotion é `--disable-demuxers` | `-f image2pipe -vcodec png` |
 | `volumedetect` não existe | mesmo ffmpeg, `--disable-filters` | extrair WAV e medir com numpy |
 | Bandeira sai como "BR" | Chrome do render não tem emoji de bandeira | desenhar a forma na mão |
+| `✕`/`✓` saem finos e pequenos | o glifo não existe na Anton e cai num fallback | desenhar (2 barras cruzadas) |
+| Fix de palavra não aplica | o token do Whisper vem com pontuação NA FRENTE (`"vazamento"`) | capturar o prefixo à parte no regex |
+| Overlay batendo na legenda | cartela/rótulo sem o `paddingBottom: 700` do `LIFT` | medir no still, não no código |
 | Animação "chuviscando" no render | `Math.random()` no componente | valores fixos |
 | Disco C: enchendo no render | cache de frames do Remotion | `$env:TEMP='D:\remotion-tmp'` |
 | Comando falha no PowerShell | `[WD]` vira wildcard | **sempre `-LiteralPath`** |
+| `Minified React error #300` no render (o still passa!) | hook (`useEnter`) dentro de ternário ou `if` num overlay | calcular TODOS os springs no topo do componente |
+| Borda do quadro desbotada com o blur | `filter: blur()` desvanece nas bordas do elemento | manter o raio < 16px, ou scale extra só na camada borrada |
+| Legenda com palavras coladas | o `scale` +8% da palavra ativa cresce pra fora e come o `gap` | gap pequeno + `padding` grande em cada palavra |
+| Studio sobe e não responde | a porta 3000 desta máquina tem outro app | `remotion studio --port 3005` |
 
 ---
 
@@ -541,7 +619,8 @@ início ao fim.
 3. **(5)** **Ler o vídeo:** tese → espinha → classificar cada trecho nos 4 tratamentos →
    calibrar densidade (~1 evento / 2,1s) → escrever `beats.ts` + `behind.ts`.
 4. **(6)** Escolher as palavras-atrás (~1 a cada 6s) e **medir** o enquadramento pra posicionar.
-5. **(7)** `python scripts/make-matte.py` + montar a pilha de camadas certa.
+5. **(7)** `python scripts/make-matte.py` + montar a pilha de camadas certa
+   **+ o fundo desfocado da Etapa 7.1 (20%, recorte aceso o vídeo inteiro)**.
 6. **(8)** Legenda simples (branca, 46, `paddingBottom` 700, some nas palavras-atrás).
 7. **(9)** **Inventar** os overlays: verbo da frase → família de forma → uma família por beat.
 8. **(10)** B-roll literal do Pexels, inserções de 1,5–2,8s, com `why` registrado.

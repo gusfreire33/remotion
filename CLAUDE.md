@@ -12,5 +12,10 @@ o render final sem o "ok" dele.
 No Framework 2, as animações são **inventadas a partir da fala de cada vídeo** (Etapas 5 e 9
 do `PLAYBOOK-2.md`) — não reaproveite as de um vídeo anterior.
 
+Scripts de **medição** da revisão (o playbook manda medir, não chutar):
+`measure-matte.py` (onde a pessoa está, pra posicionar o texto atrás) ·
+`measure-audio.py` (pico da mistura vs. pico da voz) · `contact-sheet.py` (folha de contato
+dos stills).
+
 - Rodar comandos a partir desta pasta. Windows + PowerShell: use sempre `-LiteralPath`.
 - `npm run dev` → `http://localhost:3000/MeuVideo`. Após mudanças: `npx tsc --noEmit` (exit 0).

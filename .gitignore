@@ -30,3 +30,11 @@ tmp/
 # scripts/pexels.cjs recria public/broll/; silence-cut/ é trabalho intermediário de corte
 public/broll/
 silence-cut/
+
+# Originais 4K movidos pra fora de public/ (o bundle copiava tudo pro TEMP)
+sources/
+public/music/*.wav
+matte.log
+transcribe.log
+*.log
+scripts/__pycache__/

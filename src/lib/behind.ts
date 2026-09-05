@@ -1,143 +1,106 @@
 /**
- * PALAVRAS ATRÁS DA PESSOA (estilo Captions).
+ * PALAVRAS ATRÁS DA PESSOA (estilo Captions) — "Vídeo 29" (OS TRÊS 10 DA
+ * VENDA / CONFIANÇA).
  *
  * Nos momentos mais marcantes da fala, a palavra entra em tipografia gigante
  * ATRÁS do apresentador — ele passa na frente do texto.
  *
- * Como funciona a mágica: `scripts/make-matte.py` recorta a pessoa do vídeo
- * base (MediaPipe) e grava `public/matte-pessoa.webm` com canal alfa. No
- * `MeuVideo.tsx` a pilha fica:
+ * Pilha em `MeuVideo.tsx`:
  *
- *     [vídeo base]  ->  [ESTE texto]  ->  [recorte da pessoa]
- *
- * Como o recorte sai do mesmo frame do vídeo base, as duas camadas de vídeo
- * recebem exatamente o MESMO zoom — o encaixe é pixel a pixel.
+ *     [vídeo base borrado]  ->  [ESTE texto]  ->  [recorte da pessoa]
  *
  * Regra de ouro: estas janelas NÃO podem colidir com beats de B-roll
- * full-bleed (lá o vídeo base não está na tela, então não há o que recortar).
+ * full-bleed. Neste vídeo os fulls são `scriptVenda` (20,34–22,20s) e
+ * `transmiteIdeias` (26,50–28,10s) — nenhuma palavra cai dentro de nenhum
+ * dos dois.
  */
 export type BehindWord = {
-  /** o que aparece atrás (pode quebrar em 2 linhas com \n) */
   text: string;
   from: number;
   to: number;
-  /**
-   * Topo do bloco no design 1080x1920.
-   *
-   * No enquadramento deste vídeo a cabeça começa em ~y=550 e o queixo fica em
-   * ~y=1000. Os valores abaixo põem a BASE do texto por volta de 620–690, de
-   * propósito: assim a palavra CRUZA a cabeça e os ombros — que é o que faz o
-   * efeito "atrás da pessoa" ser percebido. Texto todo acima de 540 flutuaria
-   * no vazio e o recorte não apareceria.
-   */
   top?: number;
-  /** tamanho da fonte (default 190) */
   size?: number;
-  /** inclinação em graus */
   rotate?: number;
-  /** "solid" = preenchida | "outline" = só contorno */
   style?: "solid" | "outline";
-  /** cor do texto (default branco) */
   color?: string;
 };
 
+/**
+ * 5 palavras em 33,25s = 1 a cada ~6,7s.
+ *
+ * Cor = semântica, no máximo 3 coloridas:
+ *   CONFIANÇA  em `accent`  (o conceito que o vídeo está vendendo)
+ *   VAZAMENTO  em `accent`  (a palavra do CTA)
+ *   (a terceira vaga ficou vazia de propósito — só 2 destaques)
+ *
+ * ── ETAPA 6.4 · POSIÇÃO MEDIDA ────────────────────────────────────────────
+ * Enquadramento deste vídeo: topo da cabeça no MATTE entre 665 e 690
+ * (busto mais baixo / mais headroom que o do "Vídeo 27", que era 535–574).
+ * Ombros ~1017–1053. Centro x ~549–603.
+ *
+ * Conversão: y_tela = 960 + (y_matte − 960) × S
+ * S = Ken Burns 1,03→1,09 no instante do MEIO da janela (o soco de 16f já
+ * acabou no meio). S medido: 1,038 a 1,089.
+ * Topo da cabeça NA TELA: 644–668.
+ *
+ * Uma linha, pedido do dono (vídeo 27): a BASE na linha do cabelo, só o
+ * terço de baixo passa atrás. top ≈ topo_tela − 0,82 × (size × 0,92)
+ */
 export const BEHIND_WORDS: BehindWord[] = [
-  // "Chat GPT Ads" — o título do vídeo, abre grande atrás dele
+  // 3,62s "um dos três 10 da venda"
+  // medido em 4,33s: topo do matte 679 · S 1,038 · topo na tela 668
   {
-    text: "CHATGPT\nADS",
-    from: 0.15,
-    to: 1.55,
-    // 270 (e não 320): com duas linhas, a de baixo ("ADS") sumia quase inteira
-    // atrás da cabeça. Aqui ela fica cortada pela metade — que é o ponto certo.
-    top: 270,
-    size: 200,
+    text: "10",
+    from: 3.62,
+    to: 5.05,
+    top: 455,
+    size: 280,
     style: "solid",
   },
-  // "o Google foi deixado como uma rede de pesquisa..."
+
+  // 6,99s "Nada mais é do que a CONFIANÇA"  ★colorida 1/2 (o conceito)
+  // medido em 7,72s: topo do matte 666 · S 1,044 · topo na tela 653
   {
-    text: "GOOGLE",
-    from: 7.2,
-    to: 8.7,
-    top: 480,
-    size: 200,
-    rotate: -4,
-    style: "outline",
-  },
-  // "passou a pesquisar muito mais por soluções"
-  {
-    text: "PESQUISAR",
-    from: 12.55,
-    to: 14.35,
-    top: 500,
-    size: 150,
-    style: "solid",
-  },
-  // "se tornou uma rede de INTENÇÃO"
-  {
-    text: "INTENÇÃO",
-    from: 19.35,
-    to: 21.05,
-    top: 470,
-    size: 175,
-    style: "solid",
-    color: "#FFD60A",
-  },
-  // "dar o mesmo tipo de segmentação"
-  {
-    text: "SEGMENTAÇÃO",
-    from: 25.85,
-    to: 27.0,
-    top: 510,
-    size: 118,
-    style: "solid",
-  },
-  // "mas de uma forma muito mais eficiente"
-  {
-    text: "EFICIENTE",
-    from: 35.85,
-    to: 36.9,
-    top: 490,
-    size: 158,
-    rotate: 3,
-    style: "solid",
-    color: "#30D158",
-  },
-  // "está disponível apenas para algumas contas"
-  {
-    text: "POUCAS\nCONTAS",
-    from: 40.95,
-    to: 42.4,
-    top: 360,
-    size: 165,
-    style: "outline",
-  },
-  // "se a sua conta foi uma das sorteadas"
-  {
-    text: "SORTEADAS",
-    from: 43.7,
-    to: 45.2,
-    top: 500,
+    text: "CONFIANÇA",
+    from: 6.99,
+    to: 8.45,
+    top: 540,
     size: 148,
     style: "solid",
     color: "#FFD60A",
   },
-  // "se você está dentro do nicho de saúde"
+
+  // 15,41s "não está conseguindo VENDER" — secundária, só contorno
+  // medido em 16,25s: topo do matte 682 · S 1,059 · topo na tela 666
   {
-    text: "SAÚDE",
-    from: 50.3,
-    to: 51.8,
-    top: 460,
-    size: 205,
-    style: "solid",
-    color: "#FF3B30",
+    text: "VENDER",
+    from: 15.41,
+    to: 17.1,
+    top: 508,
+    size: 210,
+    style: "outline",
+    rotate: -3,
   },
-  // CTA — a palavra que ele pede pra comentar
+
+  // 22,48s "fazer esses AJUSTES é muito simples"
+  // medido em 23,24s: topo do matte 665 · S 1,072 · topo na tela 644
+  {
+    text: "AJUSTES",
+    from: 22.48,
+    to: 24.0,
+    top: 500,
+    size: 188,
+    style: "solid",
+  },
+
+  // 32,04s CTA — a palavra que ele pede pra comentar  ★colorida 2/2
+  // medido em 32,77s: topo do matte 690 · S 1,089 · topo na tela 666
   {
     text: "VAZAMENTO",
-    from: 59.25,
-    to: 61.05,
-    top: 490,
-    size: 150,
+    from: 32.04,
+    to: 33.5,
+    top: 548,
+    size: 156,
     style: "solid",
     color: "#FFD60A",
   },

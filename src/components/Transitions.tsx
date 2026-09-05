@@ -41,7 +41,7 @@ const Whip: React.FC<{ dur: number }> = ({ dur }) => {
   return (
     <AbsoluteFill
       style={{
-        backdropFilter: `blur(${amt * 20}px) saturate(${1 + amt * 0.5})`,
+        backdropFilter: `blur(${amt * 12}px) saturate(${1 + amt * 0.4})`,
         opacity: amt > 0.01 ? 1 : 0,
       }}
     >

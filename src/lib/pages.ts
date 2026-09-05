@@ -8,6 +8,7 @@ export type Page = {
 };
 
 const SENTENCE_END = /[.!?]$/;
+// Framework 2: ≤3 palavras / ≤24 caracteres por página (PLAYBOOK-2 Etapa 8).
 const MAX_WORDS = 3;
 const MAX_CHARS = 24;
 
