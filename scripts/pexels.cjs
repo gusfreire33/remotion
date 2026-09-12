@@ -14,9 +14,13 @@ const path = require("path");
 const https = require("https");
 
 const ROOT = process.cwd();
+// --landscape: prefere 16:9 (YouTube). Default continua vertical (Reels).
+const LANDSCAPE = process.argv.includes("--landscape");
+const ORIENT = LANDSCAPE ? "landscape" : "portrait";
+const argOf = (flag) => { const i = process.argv.indexOf(flag); return i > 0 ? process.argv[i + 1] : null; };
 const ENV = path.join(ROOT, ".env");
 const OUT_DIR = path.join(ROOT, "public", "broll");
-const PLAN = path.join(ROOT, "src", "lib", "broll-plan.json");
+const PLAN = argOf("--plan") ? path.resolve(ROOT, argOf("--plan")) : path.join(ROOT, "src", "lib", "broll-plan.json");
 const CREDITS = path.join(OUT_DIR, "CREDITS.json");
 
 function apiKey() {
@@ -78,6 +82,11 @@ function pickVideoFile(video) {
   const score = (f) => {
     const w = f.width || 0;
     const h = f.height || 0;
+    if (LANDSCAPE) {
+      const landscape = w > h ? 1 : 0;
+      const fit = -Math.abs((w || 0) - 1920) / 1000;
+      return landscape * 3 + fit;
+    }
     const vertical = h > w ? 1 : 0;
     // alvo: altura ~1920 (design 1080x1920); penaliza excesso e falta
     const fit = -Math.abs((h || 0) - 1920) / 1000;
@@ -86,7 +95,7 @@ function pickVideoFile(video) {
   return files.slice().sort((a, b) => score(b) - score(a))[0];
 }
 
-async function searchVideos(query, { perPage = 12, orientation = "portrait" } = {}) {
+async function searchVideos(query, { perPage = 15, orientation = ORIENT } = {}) {
   const url =
     `https://api.pexels.com/videos/search?query=${encodeURIComponent(query)}` +
     `&per_page=${perPage}&orientation=${orientation}&size=medium`;
@@ -102,7 +111,7 @@ async function searchVideos(query, { perPage = 12, orientation = "portrait" } = 
   }));
 }
 
-async function searchPhotos(query, { perPage = 12, orientation = "portrait" } = {}) {
+async function searchPhotos(query, { perPage = 15, orientation = ORIENT } = {}) {
   const url =
     `https://api.pexels.com/v1/search?query=${encodeURIComponent(query)}` +
     `&per_page=${perPage}&orientation=${orientation}`;
@@ -179,7 +188,8 @@ async function cmdFetch() {
 }
 
 (async () => {
-  const [, , cmd, arg, kind] = process.argv;
+  const [, , cmd, arg, kindRaw] = process.argv;
+  const kind = kindRaw && !kindRaw.startsWith("--") ? kindRaw : undefined;
   if (cmd === "search") await cmdSearch(arg, kind);
   else if (cmd === "fetch") await cmdFetch();
   else console.log("uso: node scripts/pexels.cjs search \"termo\" [photo|video] | fetch [--force]");

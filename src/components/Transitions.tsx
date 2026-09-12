@@ -6,7 +6,7 @@ import {
   useCurrentFrame,
 } from "remotion";
 import { secToFrame } from "../lib/constants";
-import { CUTS, type CutKind } from "../lib/cuts";
+import { CUTS, type Cut, type CutKind } from "../lib/cuts";
 
 const EASE = Easing.inOut(Easing.ease);
 const CLAMP = { extrapolateLeft: "clamp", extrapolateRight: "clamp" } as const;
@@ -136,9 +136,9 @@ const DURATION: Record<CutKind, number> = {
   glitch: 5,
 };
 
-export const Transitions: React.FC = () => (
+export const Transitions: React.FC<{ cuts?: Cut[] }> = ({ cuts = CUTS }) => (
   <Sequence name="TRANSICOES" layout="none">
-    {CUTS.map((c, i) => {
+    {cuts.map((c, i) => {
       const Comp = KINDS[c.kind];
       const dur = DURATION[c.kind];
       // começa 2 frames ANTES do corte: o borrão tem que já estar subindo

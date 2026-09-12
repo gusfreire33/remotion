@@ -38,3 +38,4 @@ matte.log
 transcribe.log
 *.log
 scripts/__pycache__/
+_unused-public/

@@ -16,7 +16,9 @@ const { selectComposition, renderStill } = require("@remotion/renderer");
   // Porta dedicada: a 3000 pode estar ocupada por outro app (ex.: Jarvis).
   const PORT = 3399;
   console.log("Selecionando composicao...");
-  const composition = await selectComposition({ serveUrl, id: "MeuVideo", port: PORT });
+  const COMP = process.env.COMP || "MeuVideo";
+  const inputProps = process.env.NO_MATTE ? { noMatte: true } : {};
+  const composition = await selectComposition({ serveUrl, id: COMP, port: PORT, inputProps });
 
   // "VSLL Wonne V4.mp4" — VSL horizontal estilo "Bilhon-OS", 69 eventos
   // @30fps (8104 frames). Stills = palavras ATRÁS + cartões + chips/steps +
@@ -61,7 +63,7 @@ const { selectComposition, renderStill } = require("@remotion/renderer");
 
   for (const frame of list) {
     const output = path.join(outDir, `still-${String(frame).padStart(5, "0")}.png`);
-    await renderStill({ composition, serveUrl, output, frame, port: PORT });
+    await renderStill({ composition, serveUrl, output, frame, port: PORT, inputProps });
     console.log("OK frame", frame, "->", output);
   }
   console.log("DONE");

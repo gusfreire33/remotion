@@ -19,3 +19,12 @@ dos stills).
 
 - Rodar comandos a partir desta pasta. Windows + PowerShell: use sempre `-LiteralPath`.
 - `npm run dev` → `http://localhost:3000/MeuVideo`. Após mudanças: `npx tsc --noEmit` (exit 0).
+
+## Variante YouTube horizontal (`src/yt2/`, composição `Yt2`) — 12/09/2026
+
+Framework 2 adaptado pra vídeos longos de YouTube: **sem legenda, sem blur de fundo**, B-roll
+horizontal (`pexels.cjs ... --landscape`), cartões com fundo animado e texto **digitado com
+teclado** (`components/TypeWriter.tsx`), ícones Lucide (`components/Icon.tsx`). Mapa em
+`src/yt2/lib/map.ts` (mesma Etapa 5/9 do PLAYBOOK-2). Stills:
+`COMP=Yt2 NO_MATTE=1 node scripts/render-stills.cjs <frames>`. Render 4K: `scripts/render-yt2-4k.cmd`.
+⚠️ Nada de `CameraMotionBlur` em volta do typewriter (ghosta a letra digitada).

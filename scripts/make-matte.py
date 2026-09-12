@@ -33,7 +33,7 @@ from mediapipe.tasks.python.vision import (
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SRC = os.path.join(ROOT, "public", sys.argv[1] if len(sys.argv) > 1 else "video30_1080.mp4")
-OUT = os.path.join(ROOT, "public", "matte-pessoa.webm")
+OUT = os.path.join(ROOT, "public", sys.argv[2] if len(sys.argv) > 2 else "matte-pessoa.webm")
 MODEL = os.path.join(ROOT, "scripts", "models", "selfie_segmenter.tflite")
 FFMPEG = os.path.join(
     ROOT, "node_modules", "@remotion", "compositor-win32-x64-msvc", "ffmpeg.exe"
@@ -76,7 +76,7 @@ def main() -> int:
         ],
         stdin=subprocess.PIPE,
         stdout=subprocess.DEVNULL,
-        stderr=open(os.path.join(ROOT, "matte-ffmpeg.log"), "wb"),
+        stderr=open(OUT + ".log", "wb"),
     )
 
     opts = ImageSegmenterOptions(
@@ -126,7 +126,9 @@ def main() -> int:
 
     cap.release()
     ff.stdin.close()
-    ff.wait()
+    if ff.wait() != 0 or n != total:
+        print(f"ERRO: encode incompleto ({n}/{total}), consulte {OUT}.log")
+        return 1
 
     size = os.path.getsize(OUT) / 1e6 if os.path.exists(OUT) else 0
     print(f"DONE: {n} frames -> {OUT} ({size:.1f} MB)")

@@ -25,7 +25,7 @@ FFMPEG = os.path.join(
 # ⚠️ TROCAR A CADA VÍDEO. Comparar a mistura nova com a voz do vídeo ANTERIOR
 # não mede nada: o pico da voz muda a cada gravação (é justamente por isso que
 # o playbook diz que o MASTER não se herda).
-VOZ = os.path.join(ROOT, "public", "video30_1080.mp4")
+VOZ = os.path.join(ROOT, "public", os.environ.get("VOZ", "yt2_1080.mp4"))
 
 
 def wav(src: str, dest: str, ss: float | None = None, t: float | None = None) -> np.ndarray:

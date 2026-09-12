@@ -80,9 +80,11 @@ const Word: React.FC<{ word: BehindWord; durationInFrames: number }> = ({
   );
 };
 
-export const BehindText: React.FC = () => (
+export const BehindText: React.FC<{ words?: BehindWord[] }> = ({
+  words = BEHIND_WORDS,
+}) => (
   <Sequence name="TEXTO ATRAS DA PESSOA" layout="none">
-    {BEHIND_WORDS.map((w) => {
+    {words.map((w) => {
       const dur = secToFrame(w.to - w.from);
       return (
         <Sequence

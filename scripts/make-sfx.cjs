@@ -251,6 +251,28 @@ const makeGlitch = (dur) => {
   return out;
 };
 
+/* ----- key1/2/3: tecla de teclado mecânico (texto digitado nos cartões) -----
+   corpo: clique curto de ruído filtrado + "tock" grave do switch; três
+   variações de tom pra não soar como metralhadora. */
+const makeKey = (dur, tone) => {
+  const n = Math.floor(dur * SR);
+  const out = new Float32Array(n);
+  let lp = 0;
+  for (let i = 0; i < n; i++) {
+    const t = i / SR;
+    const click = rnd() * Math.exp(-t * 900);          // ataque: click de plástico
+    lp = lp + (rnd() - lp) * 0.25;                      // ruído filtrado (corpo)
+    const body = lp * Math.exp(-t * 140) * 0.9;
+    const tock = Math.sin(2 * Math.PI * tone * t) * Math.exp(-t * 90) * 0.5; // grave do switch
+    const bottom = Math.sin(2 * Math.PI * (tone * 2.7) * t) * Math.exp(-t * 400) * 0.25;
+    out[i] = click * 0.7 + body + tock + bottom;
+  }
+  return out;
+};
+writeWav("key1", makeKey(0.07, 180));
+writeWav("key2", makeKey(0.07, 230));
+writeWav("key3", makeKey(0.07, 150));
+
 writeWav("whoosh", makeWhoosh(0.36, true));
 writeWav("burn", makeBurn(0.7));
 writeWav("pop", makePop(0.16));

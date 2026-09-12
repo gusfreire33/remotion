@@ -5,7 +5,7 @@ import {
   useCurrentFrame,
   useVideoConfig,
 } from "remotion";
-import { PAGES } from "../lib/pages";
+import { PAGES, type Page } from "../lib/pages";
 import { MONTSERRAT } from "../lib/fonts";
 import { isBehindWindow } from "../lib/behind";
 
@@ -16,19 +16,22 @@ import { isBehindWindow } from "../lib/behind";
  * nunca de cor. Durante a janela da palavra-atrás a legenda some: a palavra
  * gigante já é a legenda naquele instante.
  */
-export const Captions: React.FC = () => {
+export const Captions: React.FC<{
+  pages?: Page[];
+  hideAt?: (ms: number) => boolean;
+}> = ({ pages = PAGES, hideAt = isBehindWindow }) => {
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
   const ms = (frame / fps) * 1000;
 
-  if (isBehindWindow(ms)) {
+  if (hideAt(ms)) {
     return null;
   }
 
   let idx = -1;
-  for (let i = 0; i < PAGES.length; i++) {
-    const start = PAGES[i].startMs;
-    const next = i + 1 < PAGES.length ? PAGES[i + 1].startMs : Infinity;
+  for (let i = 0; i < pages.length; i++) {
+    const start = pages[i].startMs;
+    const next = i + 1 < pages.length ? pages[i + 1].startMs : Infinity;
     if (ms >= start && ms < next) {
       idx = i;
       break;
@@ -38,7 +41,7 @@ export const Captions: React.FC = () => {
     return null;
   }
 
-  const page = PAGES[idx];
+  const page = pages[idx];
   const pageStartFrame = (page.startMs / 1000) * fps;
   const enter = spring({
     frame: frame - pageStartFrame,

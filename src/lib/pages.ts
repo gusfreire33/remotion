@@ -14,7 +14,7 @@ const MAX_CHARS = 24;
 
 // Agrupa as palavras em "paginas" curtas (estilo TikTok): no maximo 3 palavras
 // ou ~24 caracteres, quebrando tambem no fim de frase.
-export const buildPages = (): Page[] => {
+export const buildPages = (words: Word[] = WORDS): Page[] => {
   const pages: Page[] = [];
   let cur: Word[] = [];
 
@@ -29,7 +29,7 @@ export const buildPages = (): Page[] => {
     }
   };
 
-  for (const w of WORDS) {
+  for (const w of words) {
     const chars =
       cur.reduce((n, x) => n + x.text.length + 1, 0) + w.text.length;
     if (cur.length >= MAX_WORDS || chars > MAX_CHARS) {

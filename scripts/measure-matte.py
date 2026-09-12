@@ -21,7 +21,7 @@ import cv2
 import numpy as np
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-MATTE = os.path.join(ROOT, "public", "matte-pessoa.webm")
+MATTE = os.path.join(ROOT, "public", os.environ.get("MATTE", "matte-pessoa.webm"))
 FFMPEG = os.path.join(
     ROOT, "node_modules", "@remotion", "compositor-win32-x64-msvc", "ffmpeg.exe"
 )
@@ -71,7 +71,11 @@ def measure(t: float) -> None:
 
 
 if __name__ == "__main__":
-    ts = [float(x) for x in sys.argv[1:]]
+    args = sys.argv[1:]
+    if args and args[0] == "--matte":
+        MATTE = os.path.abspath(args[1])
+        args = args[2:]
+    ts = [float(x) for x in args]
     if not ts:
         ts = [i * 8.0 + 2.0 for i in range(14)]
     print("  tempo   topo cabeca | ombros | largura cabeca | centro x")
