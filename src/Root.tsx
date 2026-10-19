@@ -14,12 +14,25 @@ import * as Reels34Config from "./reels34/lib/constants";
 import { Reels35 } from "./reels35/Reels35";
 import * as Reels35Config from "./reels35/lib/constants";
 import * as Yt2Config from "./yt2/lib/constants";
+import { WonneMaxVSL } from "./wmvsl/WonneMaxVSL";
+import * as WmvslConfig from "./wmvsl/lib/sync";
 
 // Each <Composition> is an entry in the sidebar!
 
 export const RemotionRoot: React.FC = () => {
   return (
     <>
+      {/* "VSL Wonne Max" — 100% IA: copy do squad + narração ElevenLabs + motion design
+          das telas do Wonne Max. Framework 2 adaptado (sem apresentador). 1920x1080@30. */}
+      <Composition
+        id="WonneMaxVSL"
+        component={WonneMaxVSL}
+        durationInFrames={WmvslConfig.DURATION_IN_FRAMES}
+        fps={WmvslConfig.FPS}
+        width={WmvslConfig.WIDTH}
+        height={WmvslConfig.HEIGHT}
+        defaultProps={{ noCaptions: false }}
+      />
       {/* "Vídeo 2 YT.mp4" — YouTube horizontal, Framework 2 + estilo Bilhon-OS, sem legenda/blur. 476,9s. */}
       <Composition
         id="Yt2"

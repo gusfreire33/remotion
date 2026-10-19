@@ -1,0 +1,3 @@
+// GERADO por scripts/wmvsl-build-words.py — não edite à mão.
+export const AUDIO_DURATION_S = 322.478;
+export const BLOCKS = [{"block": 1, "start": 0.6, "end": 9.252}, {"block": 2, "start": 9.652, "end": 32.021}, {"block": 3, "start": 32.421, "end": 61.063}, {"block": 4, "start": 61.463, "end": 85.12}, {"block": 5, "start": 85.52, "end": 120.123}, {"block": 6, "start": 120.523, "end": 142.522}, {"block": 7, "start": 142.922, "end": 170.338}, {"block": 8, "start": 170.738, "end": 197.143}, {"block": 9, "start": 197.543, "end": 221.598}, {"block": 10, "start": 221.998, "end": 253.998}, {"block": 11, "start": 254.398, "end": 283.967}, {"block": 12, "start": 284.367, "end": 303.962}, {"block": 13, "start": 304.362, "end": 320.878}];

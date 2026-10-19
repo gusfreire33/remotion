@@ -39,3 +39,6 @@ transcribe.log
 *.log
 scripts/__pycache__/
 _unused-public/
+
+# VSL Wonne Max: narração regerável via scripts/wmvsl-build-words.py (sources/wmvsl-voz)
+public/wmvsl/
